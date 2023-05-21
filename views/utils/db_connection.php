@@ -1,9 +1,9 @@
 <?php
 
-$servername = "127.0.0.1";
-$username = "root";
-$password = "";
-$dbname = "otiva";
+$servername = $_ENV['HOST'];
+$username = $_ENV['USER_NAME'];
+$password = $_ENV['PASSWORD'];
+$dbname = $_ENV['DB_NAME'];
 
 try {
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
