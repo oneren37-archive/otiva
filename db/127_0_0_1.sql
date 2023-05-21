@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Май 21 2023 г., 17:50
+-- Время создания: Май 21 2023 г., 18:35
 -- Версия сервера: 5.7.39-log
 -- Версия PHP: 8.0.22
 
@@ -22,6 +22,55 @@ SET time_zone = "+00:00";
 --
 CREATE DATABASE IF NOT EXISTS `otiva` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `otiva`;
+
+DELIMITER $$
+--
+-- Процедуры
+--
+CREATE DEFINER=`root`@`%` PROCEDURE `adverts_by_cat` (IN `cid` INT)   BEGIN
+    SELECT *
+    FROM home_view hv
+    WHERE hv.cid = cid;
+END$$
+
+CREATE DEFINER=`root`@`%` PROCEDURE `adverts_by_uid` (IN `uid` INT)   BEGIN
+    SELECT *
+    FROM home_view hv
+    WHERE hv.uid = uid;
+END$$
+
+CREATE DEFINER=`root`@`%` PROCEDURE `crate_advert` (IN `a` INT, `t` TEXT, `image` TEXT, `descr` TEXT, `cat` INT, `p` INT)   BEGIN
+    insert into advert (author, title, img, description, category, price)
+    values (a, t, image, descr, cat, p);
+END$$
+
+CREATE DEFINER=`root`@`%` PROCEDURE `crate_message` (IN `a` INT, IN `s` INT, IN `r` INT, IN `t` TEXT)   BEGIN
+    insert into message (advert, sender, receiver, text)
+    values (a, s, r, t);
+END$$
+
+CREATE DEFINER=`root`@`%` PROCEDURE `create_user` (IN `l` TEXT, IN `p` TEXT, IN `n` TEXT)   BEGIN
+    insert into user (login, password, name)
+    values (l, p, n);
+END$$
+
+CREATE DEFINER=`root`@`%` PROCEDURE `get_advert` (IN `aid` INT)   BEGIN
+    SELECT *
+    FROM home_view hv
+    WHERE hv.aid = aid;
+END$$
+
+CREATE DEFINER=`root`@`%` PROCEDURE `get_chats` (IN `aid` INT, IN `receiver` INT)   BEGIN
+    SELECT distinct sender, name
+    FROM otiva.message join user u on u.uid = message.sender
+    WHERE otiva.message.advert = aid and message.receiver = receiver and message.sender <> message.receiver;
+END$$
+
+CREATE DEFINER=`root`@`%` PROCEDURE `messages_by_aid` (IN `aid` INT)   begin
+    select * from get_messages where advert = aid;
+end$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -211,7 +260,7 @@ INSERT INTO `user` (`uid`, `login`, `password`, `role`, `name`) VALUES
 --
 DROP TABLE IF EXISTS `get_messages`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY DEFINER VIEW `get_messages`  AS   (select `message`.`advert` AS `advert`,`s`.`name` AS `name`,`message`.`text` AS `text`,`message`.`date` AS `date` from (`message` join `user` `s` on((`s`.`uid` = `message`.`sender`))) order by `message`.`date`)  ;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `get_messages`  AS   (select `message`.`advert` AS `advert`,`s`.`name` AS `name`,`message`.`text` AS `text`,`message`.`date` AS `date` from (`message` join `user` `s` on((`s`.`uid` = `message`.`sender`))) order by `message`.`date`)  ;
 
 -- --------------------------------------------------------
 
@@ -220,7 +269,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY DEFINER VIEW `get_mes
 --
 DROP TABLE IF EXISTS `home_view`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY DEFINER VIEW `home_view`  AS   (select `u`.`uid` AS `uid`,`u`.`name` AS `author`,`advert`.`title` AS `title`,`advert`.`img` AS `img`,`advert`.`description` AS `description`,`s`.`name` AS `status`,`c`.`name` AS `category`,`c`.`cid` AS `cid`,`advert`.`date` AS `date`,`advert`.`price` AS `price`,`advert`.`aid` AS `aid` from (((`advert` join `user` `u` on((`advert`.`author` = `u`.`uid`))) join `category` `c` on((`c`.`cid` = `advert`.`category`))) join `status` `s` on((`s`.`sid` = `advert`.`status`))) order by `advert`.`date` desc)  ;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `home_view`  AS   (select `u`.`uid` AS `uid`,`u`.`name` AS `author`,`advert`.`title` AS `title`,`advert`.`img` AS `img`,`advert`.`description` AS `description`,`s`.`name` AS `status`,`c`.`name` AS `category`,`c`.`cid` AS `cid`,`advert`.`date` AS `date`,`advert`.`price` AS `price`,`advert`.`aid` AS `aid` from (((`advert` join `user` `u` on((`advert`.`author` = `u`.`uid`))) join `category` `c` on((`c`.`cid` = `advert`.`category`))) join `status` `s` on((`s`.`sid` = `advert`.`status`))) order by `advert`.`date` desc)  ;
 
 --
 -- Индексы сохранённых таблиц
